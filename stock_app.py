@@ -8,7 +8,10 @@ from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 
-def get_data_closing(data):
+model_close = load_model("model_LSTM_Close.h5")
+model_roc = load_model("model_LSTM_ROC.h5")
+
+def LSTM_get_data_closing(data):
     data["Date"] = pd.to_datetime(data.Date, format="%Y-%m-%d")
     data.index = data['Date']
 
@@ -40,8 +43,6 @@ def get_data_closing(data):
 
     x_train_close = np.reshape(x_train_close, (x_train_close.shape[0], x_train_close.shape[1], 1))
 
-    model_close = load_model("model_LSTM_Close.h5")
-
     inputs_close = data_close[len(data_close) - len(valid_close) - 60:].values
     inputs_close = inputs_close.reshape(-1, 1)
     inputs_close = scaler_close.transform(inputs_close)
@@ -62,7 +63,7 @@ def get_data_closing(data):
     return {"train_close": train_close, "valid_close": valid_close}
 
 
-def get_data_roc(data):
+def LSTM_get_data_roc(data):
     data["Date"] = pd.to_datetime(data.Date, format="%Y-%m-%d")
     data.index = data['Date']
 
@@ -94,8 +95,6 @@ def get_data_roc(data):
 
     x_train_roc = np.reshape(x_train_roc, (x_train_roc.shape[0], x_train_roc.shape[1], 1))
 
-    model_roc = load_model("model_LSTM_ROC.h5")
-
     inputs_roc = data_roc[len(data_roc) - len(valid_roc) - 60:].values
     inputs_roc = inputs_roc.reshape(-1, 1)
     inputs_roc = scaler_roc.transform(inputs_roc)
@@ -121,142 +120,83 @@ server = app.server
 
 df_nse = pd.read_csv("./NSE-TATA.csv")
 df = pd.read_csv("./stock_data.csv")
-header = "Stock data"
 
 app.layout = html.Div([
-
-    html.H1("Stock Price Analysis Dashboard", style={"textAlign": "center"}),
-
+    html.H1("STOCK PRICE ANALYSIS DASHBOARD", style={"textAlign": "center", "fontSize": 32}),
     dcc.Tabs(id="tabs", children=[
-
-        dcc.Tab(label='NSE-TATAGLOBAL Stock Data', children=[
+        dcc.Tab(label='NSE-TATAGLOBAL STOCK DATA', children=[
             html.Div([
-                html.H2("Actual closing price", style={"textAlign": "center"}),
-                dcc.Graph(
-                    id="Actual closing data",
-                    figure={
-                        "data": [
-                            go.Scatter(
-                                x=get_data_closing(df_nse)["train_close"].index,
-                                y=get_data_closing(df_nse)["valid_close"]["Close"],
-                                mode='markers'
-                            )
-
-                        ],
-                        "layout": go.Layout(
-                            title='scatter plot',
-                            xaxis={'title': 'Date'},
-                            yaxis={'title': 'Closing Rate'}
-                        )
-                    }
-
-                ),
-                html.H2("LSTM Predicted closing price", style={"textAlign": "center"}),
-                dcc.Graph(
-                    id="Predicted Data closing price",
-                    figure={
-                        "data": [
-                            go.Scatter(
-                                x=get_data_closing(df_nse)["valid_close"].index,
-                                y=get_data_closing(df_nse)["valid_close"]["Predictions"],
-                                mode='markers'
-                            )
-
-                        ],
-                        "layout": go.Layout(
-                            title='scatter plot',
-                            xaxis={'title': 'Date'},
-                            yaxis={'title': 'Closing Rate'}
-                        )
-                    }
-
-                ),
-                html.H2("Actual price of change", style={"textAlign": "center"}),
-                dcc.Graph(
-                    id="Actual price of change data",
-                    figure={
-                        "data": [
-                            go.Scatter(
-                                x=get_data_roc(df_nse)["train_roc"].index,
-                                y=get_data_roc(df_nse)["valid_roc"]["ROC"],
-                                mode='markers'
-                            )
-
-                        ],
-                        "layout": go.Layout(
-                            title='scatter plot',
-                            xaxis={'title': 'Date'},
-                            yaxis={'title': 'Closing Rate'}
-                        )
-                    }
-
-                ),
-                html.H2("LSTM Predicted price of change", style={"textAlign": "center"}),
-                dcc.Graph(
-                    id="Predicted Data price of change",
-                    figure={
-                        "data": [
-                            go.Scatter(
-                                x=get_data_roc(df_nse)["valid_roc"].index,
-                                y=get_data_roc(df_nse)["valid_roc"]["Predictions"],
-                                mode='markers'
-                            )
-
-                        ],
-                        "layout": go.Layout(
-                            title='scatter plot',
-                            xaxis={'title': 'Date'},
-                            yaxis={'title': 'Price Of Change Rate'}
-                        )
-                    }
-
-                )
-            ])
-
-        ]),
-        dcc.Tab(label=header, children=[
-            html.Div([
-                html.H1(header,
+                html.H1('NSE-TATAGLOBAL STOCK DATA',
                         style={'textAlign': 'center'}),
-
-                dcc.Dropdown(id='my-dropdown',
+                html.Div(style={'display': 'flex', "margin-left": 80}, children=[
+                    html.Label("Filter", style={"fontSize": 24, "margin-right": 10, "font-style": "italic", "font-weight": "bold"}),
+                    dcc.Dropdown(id='my-dropdown2',
+                                options=[{'label': 'LSTM', 'value': 'LSTM'},
+                                        {'label': 'RNN', 'value': 'RNN'},
+                                        {'label': 'XGBoost ', 'value': 'XGBoost '}],
+                                value='LSTM',
+                                style={"width": "40%", "padding-left": 10}),
+                ]),
+                html.H2("Actual closing price", style={"textAlign": "center"}),
+                dcc.Graph(id='actual closing NSE'),
+                html.H2("Predicted closing price", style={"textAlign": "center"}),
+                dcc.Graph(id='predict closing NSE'),
+                html.H2("Actual price of change", style={"textAlign": "center"}),
+                dcc.Graph(id='actual roc NSE'),
+                html.H2("Predicted price of change", style={"textAlign": "center"}),
+                dcc.Graph(id='predict roc NSE')
+            ])
+        ]),
+        dcc.Tab(label="STOCK DATA", children=[
+            html.Div([
+                html.H1("STOCK DATA",
+                        style={'textAlign': 'center'}),
+                html.Div(style={'display': 'flex', "margin-left": 80}, children=[
+                    html.Label("Filter", style={"fontSize": 24, "margin-right": 10, "font-style": "italic", "font-weight": "bold"}),
+                    dcc.Dropdown(id='my-dropdown',
                              options=[{'label': 'Tesla', 'value': 'TSLA'},
                                       {'label': 'Apple', 'value': 'AAPL'},
                                       {'label': 'Facebook', 'value': 'FB'},
                                       {'label': 'Microsoft', 'value': 'MSFT'}],
                              multi=True, value=['FB'],
-                             style={"display": "block", "margin-left": "auto",
-                                    "margin-right": "auto", "width": "60%"}),
+                             style={"width": "100%"}),
+                    dcc.Dropdown(id='my-dropdown1',
+                                options=[{'label': 'LSTM', 'value': 'LSTM'},
+                                        {'label': 'RNN', 'value': 'RNN'},
+                                        {'label': 'XGBoost ', 'value': 'XGBoost '}],
+                                value='LSTM',
+                                style={"width": "40%", "padding-left": 10}),
+                ]),
                 html.H2("Actual closing price", style={"textAlign": "center"}),
                 dcc.Graph(id='actual closing'),
-                html.H2("LSTM Predicted closing price", style={"textAlign": "center"}),
+                html.H2("Predicted closing price", style={"textAlign": "center"}),
                 dcc.Graph(id='predict closing'),
                 html.H2("Actual price of change", style={"textAlign": "center"}),
                 dcc.Graph(id='actual roc'),
-                html.H2("LSTM Predicted price of change", style={"textAlign": "center"}),
-                dcc.Graph(id='predict roc'),
+                html.H2("Predicted price of change", style={"textAlign": "center"}),
+                dcc.Graph(id='predict roc')
             ], className="container"),
         ])
-
     ])
 ])
 
 
-@app.callback(Output('actual closing', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_graph(selected_dropdown):
-    filter_df = pd.DataFrame()
-    for stock in selected_dropdown:
-        filter_df = filter_df.append(df.loc[df['Stock'] == stock])
-
-    figure={
+@app.callback(Output('actual closing NSE', 'figure'),
+              Output('predict closing NSE', 'figure'),
+              Output('actual roc NSE', 'figure'),
+              Output('predict roc NSE', 'figure'),
+              Input('my-dropdown2', 'value'))
+def update_graph(selected_dropdown):  
+    # if selected_dropdown == "LSTM":
+    result1 = LSTM_get_data_closing(df_nse)
+    result2 = LSTM_get_data_roc(df_nse)
+    figure1 = {
                 "data": [
                     go.Scatter(
-                        x=get_data_closing(filter_df)["train_close"].index,
-                        y=get_data_closing(filter_df)["valid_close"]["Close"],
+                        x=result1["train_close"].index,
+                        y=result1["valid_close"]["Close"],
                         mode='markers'
                     )
-
                 ],
                 "layout": go.Layout(
                     title='scatter plot',
@@ -264,24 +204,13 @@ def update_graph(selected_dropdown):
                     yaxis={'title': 'Closing Rate'}
                 )
             }
-
-    return figure
-
-
-@app.callback(Output('predict closing', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_graph(selected_dropdown):
-    filter_df = pd.DataFrame()
-    for stock in selected_dropdown:
-        filter_df = filter_df.append(df.loc[df['Stock'] == stock])
-    figure={
+    figure2 = {
                 "data": [
                     go.Scatter(
-                        x=get_data_closing(filter_df)["valid_close"].index,
-                        y=get_data_closing(filter_df)["valid_close"]["Predictions"],
+                        x=result1["valid_close"].index,
+                        y=result1["valid_close"]["Predictions"],
                         mode='markers'
                     )
-
                 ],
                 "layout": go.Layout(
                     title='scatter plot',
@@ -289,49 +218,27 @@ def update_graph(selected_dropdown):
                     yaxis={'title': 'Closing Rate'}
                 )
             }
-
-    return figure
-
-
-@app.callback(Output('actual roc', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_graph(selected_dropdown):
-    filter_df = pd.DataFrame()
-    for stock in selected_dropdown:
-        filter_df = filter_df.append(df.loc[df['Stock'] == stock])
-    figure={
+    figure3 = {
                 "data": [
                     go.Scatter(
-                        x=get_data_roc(filter_df)["train_roc"].index,
-                        y=get_data_roc(filter_df)["valid_roc"]["ROC"],
+                        x=result2["train_roc"].index,
+                        y=result2["valid_roc"]["ROC"],
                         mode='markers'
                     )
-
                 ],
                 "layout": go.Layout(
                     title='scatter plot',
                     xaxis={'title': 'Date'},
-                    yaxis={'title': 'Closing Rate'}
+                    yaxis={'title': 'Price Of Change Rate'}
                 )
             }
-
-    return figure
-
-
-@app.callback(Output('predict roc', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_graph(selected_dropdown):
-    filter_df = pd.DataFrame()
-    for stock in selected_dropdown:
-        filter_df = filter_df.append(df.loc[df['Stock'] == stock])
-    figure={
+    figure4 = {
                 "data": [
                     go.Scatter(
-                        x=get_data_roc(filter_df)["valid_roc"].index,
-                        y=get_data_roc(filter_df)["valid_roc"]["Predictions"],
+                        x=result2["valid_roc"].index,
+                        y=result2["valid_roc"]["Predictions"],
                         mode='markers'
                     )
-
                 ],
                 "layout": go.Layout(
                     title='scatter plot',
@@ -340,7 +247,82 @@ def update_graph(selected_dropdown):
                 )
             }
 
-    return figure
+    return figure1, figure2, figure3, figure4
+
+
+@app.callback(Output('actual closing', 'figure'),
+              Output('predict closing', 'figure'),
+              Output('actual roc', 'figure'),
+              Output('predict roc', 'figure'),
+              Input('my-dropdown', 'value'), 
+              Input('my-dropdown1', 'value'))
+def update_graph(selected_dropdown1, selected_dropdown2):
+    filter_df = pd.DataFrame()
+    for stock in selected_dropdown1:
+        filter_df = filter_df.append(df.loc[df['Stock'] == stock])
+    
+    # if selected_dropdown2 == "LSTM":
+    result1 = LSTM_get_data_closing(filter_df)
+    result2 = LSTM_get_data_roc(filter_df)
+    figure1 = {
+                "data": [
+                    go.Scatter(
+                        x=result1["train_close"].index,
+                        y=result1["valid_close"]["Close"],
+                        mode='markers'
+                    )
+                ],
+                "layout": go.Layout(
+                    title='scatter plot',
+                    xaxis={'title': 'Date'},
+                    yaxis={'title': 'Closing Rate'}
+                )
+            }
+    figure2 = {
+                "data": [
+                    go.Scatter(
+                        x=result1["valid_close"].index,
+                        y=result1["valid_close"]["Predictions"],
+                        mode='markers'
+                    )
+                ],
+                "layout": go.Layout(
+                    title='scatter plot',
+                    xaxis={'title': 'Date'},
+                    yaxis={'title': 'Closing Rate'}
+                )
+            }
+    figure3 = {
+                "data": [
+                    go.Scatter(
+                        x=result2["train_roc"].index,
+                        y=result2["valid_roc"]["ROC"],
+                        mode='markers'
+                    )
+                ],
+                "layout": go.Layout(
+                    title='scatter plot',
+                    xaxis={'title': 'Date'},
+                    yaxis={'title': 'Price Of Change Rate'}
+                )
+            }
+    figure4 = {
+                "data": [
+                    go.Scatter(
+                        x=result2["valid_roc"].index,
+                        y=result2["valid_roc"]["Predictions"],
+                        mode='markers'
+                    )
+                ],
+                "layout": go.Layout(
+                    title='scatter plot',
+                    xaxis={'title': 'Date'},
+                    yaxis={'title': 'Price Of Change Rate'}
+                )
+            }
+
+    return figure1, figure2, figure3, figure4
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
