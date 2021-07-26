@@ -8,10 +8,12 @@ from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 
-model_close = load_model("model_LSTM_Close.h5")
-model_roc = load_model("model_LSTM_ROC.h5")
+LSTM_model_close = load_model("model_LSTM_Close.h5")
+LSTM_model_roc = load_model("model_LSTM_ROC.h5")
+RNN_model_close = load_model("model_RNN_Close.h5")
+RNN_model_roc = load_model("model_RNN_ROC.h5")
 
-def LSTM_get_data_closing(data):
+def get_data_closing(data, model):
     data["Date"] = pd.to_datetime(data.Date, format="%Y-%m-%d")
     data.index = data['Date']
 
@@ -53,7 +55,12 @@ def LSTM_get_data_closing(data):
     X_test_close = np.array(X_test_close)
 
     X_test_close = np.reshape(X_test_close, (X_test_close.shape[0], X_test_close.shape[1], 1))
-    closing_price = model_close.predict(X_test_close)
+
+    if model == "LSTM":
+        closing_price = LSTM_model_close.predict(X_test_close)
+    else:
+        closing_price = RNN_model_close.predict(X_test_close)
+
     closing_price = scaler_close.inverse_transform(closing_price)
 
     train_close = data_close[:987]
@@ -63,7 +70,7 @@ def LSTM_get_data_closing(data):
     return {"train_close": train_close, "valid_close": valid_close}
 
 
-def LSTM_get_data_roc(data):
+def get_data_roc(data, model):
     data["Date"] = pd.to_datetime(data.Date, format="%Y-%m-%d")
     data.index = data['Date']
 
@@ -105,7 +112,12 @@ def LSTM_get_data_roc(data):
     X_test_roc = np.array(X_test_roc)
 
     X_test_roc = np.reshape(X_test_roc, (X_test_roc.shape[0], X_test_roc.shape[1], 1))
-    roc_price = model_roc.predict(X_test_roc)
+    
+    if model == "LSTM":
+        roc_price = LSTM_model_roc.predict(X_test_roc)
+    else:
+        roc_price = RNN_model_roc.predict(X_test_roc)
+
     roc_price = scaler_roc.inverse_transform(roc_price)
 
     train_roc = data_roc[:987]
@@ -137,13 +149,9 @@ app.layout = html.Div([
                                 value='LSTM',
                                 style={"width": "40%", "padding-left": 10}),
                 ]),
-                html.H2("Actual closing price", style={"textAlign": "center"}),
                 dcc.Graph(id='actual closing NSE'),
-                html.H2("Predicted closing price", style={"textAlign": "center"}),
                 dcc.Graph(id='predict closing NSE'),
-                html.H2("Actual price of change", style={"textAlign": "center"}),
                 dcc.Graph(id='actual roc NSE'),
-                html.H2("Predicted price of change", style={"textAlign": "center"}),
                 dcc.Graph(id='predict roc NSE')
             ])
         ]),
@@ -167,13 +175,9 @@ app.layout = html.Div([
                                 value='LSTM',
                                 style={"width": "40%", "padding-left": 10}),
                 ]),
-                html.H2("Actual closing price", style={"textAlign": "center"}),
                 dcc.Graph(id='actual closing'),
-                html.H2("Predicted closing price", style={"textAlign": "center"}),
                 dcc.Graph(id='predict closing'),
-                html.H2("Actual price of change", style={"textAlign": "center"}),
                 dcc.Graph(id='actual roc'),
-                html.H2("Predicted price of change", style={"textAlign": "center"}),
                 dcc.Graph(id='predict roc')
             ], className="container"),
         ])
@@ -187,9 +191,8 @@ app.layout = html.Div([
               Output('predict roc NSE', 'figure'),
               Input('my-dropdown2', 'value'))
 def update_graph(selected_dropdown):  
-    # if selected_dropdown == "LSTM":
-    result1 = LSTM_get_data_closing(df_nse)
-    result2 = LSTM_get_data_roc(df_nse)
+    result1 = get_data_closing(df_nse, selected_dropdown)
+    result2 = get_data_roc(df_nse, selected_dropdown)
     figure1 = {
                 "data": [
                     go.Scatter(
@@ -199,7 +202,7 @@ def update_graph(selected_dropdown):
                     )
                 ],
                 "layout": go.Layout(
-                    title='scatter plot',
+                    title='<b>Actual closing price</b>',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Closing Rate'}
                 )
@@ -213,7 +216,7 @@ def update_graph(selected_dropdown):
                     )
                 ],
                 "layout": go.Layout(
-                    title='scatter plot',
+                    title='<b>Predicted closing price</b>',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Closing Rate'}
                 )
@@ -227,7 +230,7 @@ def update_graph(selected_dropdown):
                     )
                 ],
                 "layout": go.Layout(
-                    title='scatter plot',
+                    title='<b>Actual price of change</b>',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Price Of Change Rate'}
                 )
@@ -241,7 +244,7 @@ def update_graph(selected_dropdown):
                     )
                 ],
                 "layout": go.Layout(
-                    title='scatter plot',
+                    title='<b>Predicted price of change</b>',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Price Of Change Rate'}
                 )
@@ -261,9 +264,8 @@ def update_graph(selected_dropdown1, selected_dropdown2):
     for stock in selected_dropdown1:
         filter_df = filter_df.append(df.loc[df['Stock'] == stock])
     
-    # if selected_dropdown2 == "LSTM":
-    result1 = LSTM_get_data_closing(filter_df)
-    result2 = LSTM_get_data_roc(filter_df)
+    result1 = get_data_closing(filter_df, selected_dropdown2)
+    result2 = get_data_roc(filter_df, selected_dropdown2)
     figure1 = {
                 "data": [
                     go.Scatter(
@@ -273,7 +275,7 @@ def update_graph(selected_dropdown1, selected_dropdown2):
                     )
                 ],
                 "layout": go.Layout(
-                    title='scatter plot',
+                    title='<b>Actual closing price</b>',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Closing Rate'}
                 )
@@ -287,7 +289,7 @@ def update_graph(selected_dropdown1, selected_dropdown2):
                     )
                 ],
                 "layout": go.Layout(
-                    title='scatter plot',
+                    title='<b>Predicted closing price</b>',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Closing Rate'}
                 )
@@ -301,7 +303,7 @@ def update_graph(selected_dropdown1, selected_dropdown2):
                     )
                 ],
                 "layout": go.Layout(
-                    title='scatter plot',
+                    title='<b>Actual price of change</b>',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Price Of Change Rate'}
                 )
@@ -315,7 +317,7 @@ def update_graph(selected_dropdown1, selected_dropdown2):
                     )
                 ],
                 "layout": go.Layout(
-                    title='scatter plot',
+                    title='<b>Predicted price of change</b>',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Price Of Change Rate'}
                 )
