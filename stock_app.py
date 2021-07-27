@@ -149,10 +149,8 @@ app.layout = html.Div([
                                 value='LSTM',
                                 style={"width": "40%", "padding-left": 10}),
                 ]),
-                dcc.Graph(id='actual closing NSE'),
-                dcc.Graph(id='predict closing NSE'),
-                dcc.Graph(id='actual roc NSE'),
-                dcc.Graph(id='predict roc NSE')
+                dcc.Graph(id='closing NSE'),
+                dcc.Graph(id='roc NSE')
             ])
         ]),
         dcc.Tab(label="STOCK DATA", children=[
@@ -175,88 +173,85 @@ app.layout = html.Div([
                                 value='LSTM',
                                 style={"width": "40%", "padding-left": 10}),
                 ]),
-                dcc.Graph(id='actual closing'),
-                dcc.Graph(id='predict closing'),
-                dcc.Graph(id='actual roc'),
-                dcc.Graph(id='predict roc')
+                dcc.Graph(id='closing'),
+                dcc.Graph(id='roc')
             ], className="container"),
         ])
     ])
 ])
 
 
-@app.callback(Output('actual closing NSE', 'figure'),
-              Output('predict closing NSE', 'figure'),
-              Output('actual roc NSE', 'figure'),
-              Output('predict roc NSE', 'figure'),
+@app.callback(Output('closing NSE', 'figure'),
+              Output('roc NSE', 'figure'),
               Input('my-dropdown2', 'value'))
 def update_graph(selected_dropdown):  
     result1 = get_data_closing(df_nse, selected_dropdown)
     result2 = get_data_roc(df_nse, selected_dropdown)
-    figure1 = {
-                "data": [
-                    go.Scatter(
-                        x=result1["train_close"].index,
+
+    trace1 = [go.Scatter(
+                        x=result1["valid_close"].index,
                         y=result1["valid_close"]["Close"],
-                        mode='markers'
-                    )
-                ],
-                "layout": go.Layout(
-                    title='<b>Actual closing price</b>',
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': 'Closing Rate'}
-                )
-            }
-    figure2 = {
-                "data": [
-                    go.Scatter(
+                        mode='lines', 
+                        name='Actual data',textposition='bottom center'
+                    )]
+    trace2 = [go.Scatter(
                         x=result1["valid_close"].index,
                         y=result1["valid_close"]["Predictions"],
-                        mode='markers'
-                    )
-                ],
-                "layout": go.Layout(
-                    title='<b>Predicted closing price</b>',
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': 'Closing Rate'}
-                )
-            }
-    figure3 = {
-                "data": [
-                    go.Scatter(
-                        x=result2["train_roc"].index,
+                        mode='lines', 
+                        name='Prediction data',textposition='bottom center'
+                    )]
+    traces1 = [trace1, trace2]
+    data1 = [val for sublist in traces1 for val in sublist]
+    figure1 = {'data': data1,
+              'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
+                                            '#FF7400', '#FFF400', '#FF0056'],
+            height=600,
+            title='<b>Closing price</b>',
+            xaxis={"title":"Date",
+                   'rangeselector': {'buttons': list([{'count': 1, 'label': '1M', 
+                                                       'step': 'month', 
+                                                       'stepmode': 'backward'},
+                                                      {'count': 6, 'label': '6M', 
+                                                       'step': 'month', 
+                                                       'stepmode': 'backward'},
+                                                      {'step': 'all'}])},
+                    },
+             yaxis={"title":"Closing Rate"})}
+
+    trace3 = [go.Scatter(
+                        x=result2["valid_roc"].index,
                         y=result2["valid_roc"]["ROC"],
-                        mode='markers'
-                    )
-                ],
-                "layout": go.Layout(
-                    title='<b>Actual price of change</b>',
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': 'Price Of Change Rate'}
-                )
-            }
-    figure4 = {
-                "data": [
-                    go.Scatter(
+                        mode='lines', opacity=0.7, 
+                        name='Actual data',textposition='bottom center'
+                    )]
+    trace4 = [go.Scatter(
                         x=result2["valid_roc"].index,
                         y=result2["valid_roc"]["Predictions"],
-                        mode='markers'
-                    )
-                ],
-                "layout": go.Layout(
-                    title='<b>Predicted price of change</b>',
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': 'Price Of Change Rate'}
-                )
-            }
+                        mode='lines', opacity=0.7, 
+                        name='Prediction data',textposition='bottom center'
+                    )]
+    traces2 = [trace3, trace4]
+    data2 = [val for sublist in traces2 for val in sublist]
+    figure2 = {'data': data2,
+              'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
+                                            '#FF7400', '#FFF400', '#FF0056'],
+            height=600,
+            title='<b>Price of change</b>',
+            xaxis={"title":"Date",
+                   'rangeselector': {'buttons': list([{'count': 1, 'label': '1M', 
+                                                       'step': 'month', 
+                                                       'stepmode': 'backward'},
+                                                      {'count': 6, 'label': '6M', 
+                                                       'step': 'month', 
+                                                       'stepmode': 'backward'},
+                                                      {'step': 'all'}])},
+                   },
+             yaxis={"title":"Price of change"})}
 
-    return figure1, figure2, figure3, figure4
+    return figure1, figure2
 
-
-@app.callback(Output('actual closing', 'figure'),
-              Output('predict closing', 'figure'),
-              Output('actual roc', 'figure'),
-              Output('predict roc', 'figure'),
+@app.callback(Output('closing', 'figure'),
+              Output('roc', 'figure'),
               Input('my-dropdown', 'value'), 
               Input('my-dropdown1', 'value'))
 def update_graph(selected_dropdown1, selected_dropdown2):
@@ -266,64 +261,68 @@ def update_graph(selected_dropdown1, selected_dropdown2):
     
     result1 = get_data_closing(filter_df, selected_dropdown2)
     result2 = get_data_roc(filter_df, selected_dropdown2)
-    figure1 = {
-                "data": [
-                    go.Scatter(
-                        x=result1["train_close"].index,
+
+    trace1 = [go.Scatter(
+                        x=result1["valid_close"].index,
                         y=result1["valid_close"]["Close"],
-                        mode='markers'
-                    )
-                ],
-                "layout": go.Layout(
-                    title='<b>Actual closing price</b>',
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': 'Closing Rate'}
-                )
-            }
-    figure2 = {
-                "data": [
-                    go.Scatter(
+                        mode='lines', 
+                        name='Actual data',textposition='bottom center'
+                    )]
+    trace2 = [go.Scatter(
                         x=result1["valid_close"].index,
                         y=result1["valid_close"]["Predictions"],
-                        mode='markers'
-                    )
-                ],
-                "layout": go.Layout(
-                    title='<b>Predicted closing price</b>',
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': 'Closing Rate'}
-                )
-            }
-    figure3 = {
-                "data": [
-                    go.Scatter(
-                        x=result2["train_roc"].index,
+                        mode='lines', 
+                        name='Prediction data',textposition='bottom center'
+                    )]
+    traces1 = [trace1, trace2]
+    data1 = [val for sublist in traces1 for val in sublist]
+    figure1 = {'data': data1,
+              'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
+                                            '#FF7400', '#FFF400', '#FF0056'],
+            height=600,
+            title='<b>Closing price</b>',
+            xaxis={"title":"Date",
+                   'rangeselector': {'buttons': list([{'count': 1, 'label': '1M', 
+                                                       'step': 'month', 
+                                                       'stepmode': 'backward'},
+                                                      {'count': 6, 'label': '6M', 
+                                                       'step': 'month', 
+                                                       'stepmode': 'backward'},
+                                                      {'step': 'all'}])},
+                    },
+             yaxis={"title":"Closing Rate"})}
+
+    trace3 = [go.Scatter(
+                        x=result2["valid_roc"].index,
                         y=result2["valid_roc"]["ROC"],
-                        mode='markers'
-                    )
-                ],
-                "layout": go.Layout(
-                    title='<b>Actual price of change</b>',
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': 'Price Of Change Rate'}
-                )
-            }
-    figure4 = {
-                "data": [
-                    go.Scatter(
+                        mode='lines', opacity=0.7, 
+                        name='Actual data',textposition='bottom center'
+                    )]
+    trace4 = [go.Scatter(
                         x=result2["valid_roc"].index,
                         y=result2["valid_roc"]["Predictions"],
-                        mode='markers'
-                    )
-                ],
-                "layout": go.Layout(
-                    title='<b>Predicted price of change</b>',
-                    xaxis={'title': 'Date'},
-                    yaxis={'title': 'Price Of Change Rate'}
-                )
-            }
+                        mode='lines', opacity=0.7, 
+                        name='Prediction data',textposition='bottom center'
+                    )]
+    traces2 = [trace3, trace4]
+    data2 = [val for sublist in traces2 for val in sublist]
+    figure2 = {'data': data2,
+              'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', 
+                                            '#FF7400', '#FFF400', '#FF0056'],
+            height=600,
+            title='<b>Price of change</b>',
+            xaxis={"title":"Date",
+                   'rangeselector': {'buttons': list([{'count': 1, 'label': '1M', 
+                                                       'step': 'month', 
+                                                       'stepmode': 'backward'},
+                                                      {'count': 6, 'label': '6M', 
+                                                       'step': 'month', 
+                                                       'stepmode': 'backward'},
+                                                      {'step': 'all'}])},
+                   },
+             yaxis={"title":"Price of change"})}
 
-    return figure1, figure2, figure3, figure4
+    return figure1, figure2
 
 
 if __name__ == '__main__':

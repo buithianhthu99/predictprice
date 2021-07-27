@@ -9,8 +9,7 @@ Open Windows PowerShell and run command:
 	* *Make sure all installation success before go to next step*
 ## Step 3: Build model
 Open Windows PowerShell and run command:
--	python .\LSTM_Close.py
--	python .\LSTM_ROC.py
+-	.\build_models.ps1
 	* *Make sure build success before go to next step*
 ## Step 4: Run app
 Open Windows PowerShell and run command:
