@@ -1,6 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from numpy.core.numeric import rollaxis
 import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
@@ -12,6 +13,8 @@ LSTM_model_close = load_model("model_LSTM_Close.h5")
 LSTM_model_roc = load_model("model_LSTM_ROC.h5")
 RNN_model_close = load_model("model_RNN_Close.h5")
 RNN_model_roc = load_model("model_RNN_ROC.h5")
+XGBoost_model_roc = load_model("model_xgBoost_ROC.h5")
+XGBoost_model_close = load_model("model_xgBoost_Close.h5")
 
 def get_data_closing(data, model):
     data["Date"] = pd.to_datetime(data.Date, format="%Y-%m-%d")
@@ -58,8 +61,10 @@ def get_data_closing(data, model):
 
     if model == "LSTM":
         closing_price = LSTM_model_close.predict(X_test_close)
-    else:
+    elif model =="RNN":
         closing_price = RNN_model_close.predict(X_test_close)
+    else:
+        closing_price = XGBoost_model_close.predict(X_test_close)
 
     closing_price = scaler_close.inverse_transform(closing_price)
 
@@ -115,8 +120,10 @@ def get_data_roc(data, model):
     
     if model == "LSTM":
         roc_price = LSTM_model_roc.predict(X_test_roc)
-    else:
+    elif model =="RNN":
         roc_price = RNN_model_roc.predict(X_test_roc)
+    else:
+        roc_price = XGBoost_model_roc.predict(X_test_roc)
 
     roc_price = scaler_roc.inverse_transform(roc_price)
 
