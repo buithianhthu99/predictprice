@@ -8,13 +8,30 @@ from dash.dependencies import Input, Output
 from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
+import xgboost as xgb
+
+
+model_seed = 10
+n_estimators = 300
+max_depth = 12
+learning_rate = 0.05
+min_child_weight = 1
+gamma = 0.001
+model= xgb.XGBRegressor(seed=model_seed,
+                      n_estimators=n_estimators,
+                      max_depth=max_depth,
+                      learning_rate=learning_rate,
+                      min_child_weight=min_child_weight,
+                      gamma=gamma,
+                      objective='reg:squarederror')
+
 
 LSTM_model_close = load_model("model_LSTM_Close.h5")
 LSTM_model_roc = load_model("model_LSTM_ROC.h5")
 RNN_model_close = load_model("model_RNN_Close.h5")
 RNN_model_roc = load_model("model_RNN_ROC.h5")
-XGBoost_model_roc = load_model("model_xgBoost_ROC.h5")
-XGBoost_model_close = load_model("model_xgBoost_Close.h5")
+XGBoost_model_roc = model.load_model("model_xgBoost_ROC.h5")
+XGBoost_model_close = model.load_model("model_xgBoost_Close.h5")
 
 def get_data_closing(data, model):
     data["Date"] = pd.to_datetime(data.Date, format="%Y-%m-%d")
