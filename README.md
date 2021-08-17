@@ -1,18 +1,18 @@
-# Guide to run app (in windows)
-## Step 1: Install python 3.9.4
-- Get file download from https://www.python.org/downloads/windows/ 
-- Install python 3.9.4
-	* *Remember to check "Add python 3.9.4 to path"*
-## Step 2: Install required modules
-Open Windows PowerShell and run command:
--	pip install -r .\requirement.txt
-	* *Make sure all installation success before go to next step*
-## Step 3: Build model
-Open Windows PowerShell and run command:
+# Hướng dẫn chạy ứng dụng (Windows)
+## Bước 1: Cài đặt python 3.9.4
+- Tải file cài đặt từ https://www.python.org/downloads/windows/ 
+- Tiến hành cài đặt python 3.9.4
+	* *Chọn "Add python 3.9.4 to path"*
+## Bước 2: Cài đặt các modules cần thiết
+Mở Windows PowerShell và chạy lệnh:
+-	pip install -r .\requirements.txt
+	* *Đảm bảo việc cài đặt này thành công trước khi qua bước tiếp theo*
+## Bước 3: Build model
+Mở Windows PowerShell và chạy lệnh:
 -	.\build_models.ps1
-	* *Make sure build success before go to next step*
-## Step 4: Run app
-Open Windows PowerShell and run command:
-- python .\stock_app.py
+	* *Đảm bảo việc cài đặt này thành công trước khi qua bước tiếp theo*
+## Bước 4: Chạy app
+Mở Windows PowerShell và chạy lệnh:
+- 	python .\stock_app.py
 
-*See dashboard at: http://localhost:8050/*
+*Dashboard được chạy trên: http://localhost:8050/*
