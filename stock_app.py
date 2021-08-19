@@ -8,30 +8,13 @@ from dash.dependencies import Input, Output
 from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
-import xgboost as xgb
 
-
-model_seed = 10
-n_estimators = 300
-max_depth = 12
-learning_rate = 0.05
-min_child_weight = 1
-gamma = 0.001
-model= xgb.XGBRegressor(seed=model_seed,
-                      n_estimators=n_estimators,
-                      max_depth=max_depth,
-                      learning_rate=learning_rate,
-                      min_child_weight=min_child_weight,
-                      gamma=gamma,
-                      objective='reg:squarederror')
 
 
 LSTM_model_close = load_model("model_LSTM_Close.h5")
 LSTM_model_roc = load_model("model_LSTM_ROC.h5")
 RNN_model_close = load_model("model_RNN_Close.h5")
 RNN_model_roc = load_model("model_RNN_ROC.h5")
-XGBoost_model_roc = model.load_model("model_xgBoost_ROC.h5")
-XGBoost_model_close = model.load_model("model_xgBoost_Close.h5")
 
 def get_data_closing(data, model):
     data["Date"] = pd.to_datetime(data.Date, format="%Y-%m-%d")
@@ -80,8 +63,6 @@ def get_data_closing(data, model):
         closing_price = LSTM_model_close.predict(X_test_close)
     elif model =="RNN":
         closing_price = RNN_model_close.predict(X_test_close)
-    else:
-        closing_price = XGBoost_model_close.predict(X_test_close)
 
     closing_price = scaler_close.inverse_transform(closing_price)
 
@@ -139,8 +120,6 @@ def get_data_roc(data, model):
         roc_price = LSTM_model_roc.predict(X_test_roc)
     elif model =="RNN":
         roc_price = RNN_model_roc.predict(X_test_roc)
-    else:
-        roc_price = XGBoost_model_roc.predict(X_test_roc)
 
     roc_price = scaler_roc.inverse_transform(roc_price)
 
